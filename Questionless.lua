@@ -1,4 +1,6 @@
-local function IsUsable(macroID)
+Questionless = LibStub("AceAddon-3.0"):NewAddon("Questionless", "AceBucket-3.0", "AceEvent-3.0")
+
+function Questionless:IsUsable(macroID)
     local text = GetMacroBody(macroID)
 
     if text then
@@ -22,11 +24,11 @@ local function IsUsable(macroID)
     end
 end
 
-local function EditShadow(button, macroID)
+function Questionless:EditShadow(button, macroID)
     local r, g, b = button.icon:GetVertexColor()
 
     -- Check if the macro is not usable
-    if not IsUsable(macroID) then
+    if not self:IsUsable(macroID) then
 
         -- Check if the icon hasn't been altered by other addons
         if r == 1 and g == 1 and b == 1 then
@@ -42,7 +44,7 @@ end
 
 -- To avoid analyzing everything again, just check the category
 -- IMPORTANT! In case of issues, add a check for the text of the macro
-local function GetMacroID(button)
+function Questionless:GetMacroID(button)
     local slot = button:GetPagedID(button) or button:CalculateAction(button) or button:GetAttribute("action") or 0
 
     if HasAction(slot) then
@@ -54,7 +56,7 @@ local function GetMacroID(button)
     end
 end
 
-local function FixButtons()
+function Questionless:FixButtons()
 
     -- Action Bars 1-8 (in order)
     local bars = {
@@ -72,24 +74,24 @@ local function FixButtons()
 
         for slot = 1, 12 do
             local button = _G[bar .. "Button" .. slot]
-            local macroID = GetMacroID(button)
+            local macroID = self:GetMacroID(button)
 
             if macroID then
-                EditShadow(button, macroID)
+                self:EditShadow(button, macroID)
 
                 -- Check if this button has been already hooked here
                 if not button.isEditShadowHooked then
 
                     -- Do stuff when mouseover starts
                     button:HookScript("OnEnter", function()
-                        local macroID = GetMacroID(button)
-                        EditShadow(button, macroID)
+                        local macroID = self:GetMacroID(button)
+                        self:EditShadow(button, macroID)
                     end)
 
                     -- Do stuff when mousover ends, for drag-and-drop
                     button:HookScript("OnLeave", function()
-                        local macroID = GetMacroID(button)
-                        EditShadow(button, macroID)
+                        local macroID = self:GetMacroID(button)
+                        self:EditShadow(button, macroID)
                     end)
 
                     -- Note that this button has just been hooked here
@@ -100,17 +102,17 @@ local function FixButtons()
     end
 end
 
-local function FixMacros()
+function Questionless:FixMacros()
 
     -- Loop through account macros (1-120) and character macros (121-138)
     for macroID = 1, 138 do
-        local text = GetMacroBody(macroID)
+        local _, icon, text = GetMacroInfo(macroID)
 
         if text then
             local statement = text:match("/use ([^\n]+)")
 
             -- Set the icon to be a question mark
-            local icon = 134400
+            local new_icon = 134400
 
             -- Evaluates macro options to check if the macro is not usable
             -- IMPORTANT! Requires a "known" condition for every Talent involved
@@ -118,55 +120,62 @@ local function FixMacros()
                 local spellID = statement:match("known:(%d+)")
 
                 -- Set the icon to match the Spell used in the "known" condition
-                icon = spellID and select(3, GetSpellInfo(spellID))
+                new_icon = spellID and select(3, GetSpellInfo(spellID))
             end
 
-            if not UnitAffectingCombat("player") then
-                EditMacro(macroID, nil, icon)
+            if not UnitAffectingCombat("player") and icon ~= new_icon then
+                EditMacro(macroID, nil, new_icon)
             end
         end
     end
 end
 
-local function OnEvent(self, event, ...)
+function Questionless:OnEnable()
 
-    if event == "ADDON_LOADED" then
+    -- Do stuff when the Macros window is being closed
+    LoadAddOn("Blizzard_MacroUI")
+    MacroFrame:HookScript("OnHide", function()
+        self:FixMacros()
+        self:FixButtons()
+    end)
 
-        local addon = ...
+    -- Nature's Swiftness
+    self:RegisterEvent("ACTIONBAR_UPDATE_USABLE", function()
+        self:FixButtons()
+    end)
 
-        if addon == "Questionless" then
+    self:RegisterEvent("PLAYER_ENTERING_WORLD", function()
+        self:FixMacros()
+        self:FixButtons()
+    end)
 
-            -- Do stuff when the Macros window is being closed
-            LoadAddOn("Blizzard_MacroUI")
-            MacroFrame:HookScript("OnHide", function()
-                FixMacros()
-                FixButtons()
-            end)
-        end
+    -- Traveler's Tundra Mammoth
+    self:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED", function()
+        self:FixButtons()
+    end)
 
-    elseif event == "PLAYER_ENTERING_WORLD"
-    or event == "PLAYER_SPECIALIZATION_CHANGED"
-    or event == "TRAIT_CONFIG_UPDATED" then
-        FixMacros()
-        FixButtons()
+    self:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED", function()
+        self:FixMacros()
+        self:FixButtons()
+    end)
 
-    elseif event == "ACTIONBAR_UPDATE_USABLE"
-    or event == "PLAYER_MOUNT_DISPLAY_CHANGED"
-    or event == "SPELL_UPDATE_ICON"
-    or event == "UPDATE_MOUSEOVER_UNIT"
-    or event == "UPDATE_BONUS_ACTIONBAR" then
-        FixButtons()
-    end
+    -- Cloudburst Totem
+    self:RegisterEvent("SPELL_UPDATE_ICON", function()
+        self:FixButtons()
+    end)
+
+    -- Talent changes within the same Specialization
+    self:RegisterEvent("TRAIT_CONFIG_UPDATED", function()
+        self:FixMacros()
+        self:FixButtons()
+    end)
+
+    -- Dragonriding
+    self:RegisterEvent("UPDATE_BONUS_ACTIONBAR", function()
+        self:FixButtons()
+    end)
+
+    self:RegisterEvent("UPDATE_MOUSEOVER_UNIT", function()
+        self:FixButtons()
+    end)
 end
-
-local Questionless = CreateFrame("Frame")
-Questionless:RegisterEvent("ADDON_LOADED")
-Questionless:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
-Questionless:RegisterEvent("PLAYER_ENTERING_WORLD")
-Questionless:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
-Questionless:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
-Questionless:RegisterEvent("SPELL_UPDATE_ICON")
-Questionless:RegisterEvent("TRAIT_CONFIG_UPDATED")
-Questionless:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
-Questionless:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-Questionless:SetScript("OnEvent", OnEvent)
