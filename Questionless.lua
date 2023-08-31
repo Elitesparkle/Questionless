@@ -143,7 +143,9 @@ local function OnEvent(self, event, ...)
                 FixButtons()
             end)
         end
+
     elseif event == "PLAYER_ENTERING_WORLD"
+    or event == "PLAYER_SPECIALIZATION_CHANGED"
     or event == "TRAIT_CONFIG_UPDATED" then
         FixMacros()
         FixButtons()
@@ -162,6 +164,7 @@ Questionless:RegisterEvent("ADDON_LOADED")
 Questionless:RegisterEvent("ACTIONBAR_UPDATE_USABLE")
 Questionless:RegisterEvent("PLAYER_ENTERING_WORLD")
 Questionless:RegisterEvent("PLAYER_MOUNT_DISPLAY_CHANGED")
+Questionless:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 Questionless:RegisterEvent("SPELL_UPDATE_ICON")
 Questionless:RegisterEvent("TRAIT_CONFIG_UPDATED")
 Questionless:RegisterEvent("UPDATE_BONUS_ACTIONBAR")
