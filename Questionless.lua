@@ -56,6 +56,32 @@ function Questionless:GetMacroID(button)
     end
 end
 
+function Questionless:FixButton(button)
+
+    local macroID = self:GetMacroID(button)
+
+    if macroID then
+        self:EditShadow(button, macroID)
+
+        -- Check if this button has been already hooked here
+        if not button.isEditShadowHooked then
+
+            -- Do stuff when mouseover starts
+            button:HookScript("OnEnter", function()
+                self:FixButton(button)
+            end)
+
+            -- Do stuff when mousover ends, for drag-and-drop
+            button:HookScript("OnLeave", function()
+                self:FixButton(button)
+            end)
+
+            -- Note that this button has just been hooked here
+            button.isEditShadowHooked = true
+        end
+    end
+end
+
 function Questionless:FixButtons()
 
     -- Action Bars 1-8 (in order)
@@ -74,30 +100,7 @@ function Questionless:FixButtons()
 
         for slot = 1, 12 do
             local button = _G[bar .. "Button" .. slot]
-            local macroID = self:GetMacroID(button)
-
-            if macroID then
-                self:EditShadow(button, macroID)
-
-                -- Check if this button has been already hooked here
-                if not button.isEditShadowHooked then
-
-                    -- Do stuff when mouseover starts
-                    button:HookScript("OnEnter", function()
-                        local macroID = self:GetMacroID(button)
-                        self:EditShadow(button, macroID)
-                    end)
-
-                    -- Do stuff when mousover ends, for drag-and-drop
-                    button:HookScript("OnLeave", function()
-                        local macroID = self:GetMacroID(button)
-                        self:EditShadow(button, macroID)
-                    end)
-
-                    -- Note that this button has just been hooked here
-                    button.isEditShadowHooked = true
-                end
-            end
+            self:FixButton(button)
         end
     end
 end
