@@ -1,43 +1,27 @@
 Questionless = LibStub("AceAddon-3.0"):NewAddon("Questionless", "AceBucket-3.0", "AceEvent-3.0")
 
-function Questionless:IsUsable(macroID)
-    local text = GetMacroBody(macroID)
+function Questionless:EditShadow(button, macroID)
+    local _, icon, text = GetMacroInfo(macroID)
 
     if text then
         local statement = text:match("/use ([^\n]+)")
 
-        -- Set the icon to be a question mark
-        local icon = 134400
+        -- Get the current color
+        local r, g, b = button.icon:GetVertexColor()
 
         -- Evaluates macro options to check if the macro is not usable
         -- IMPORTANT! Requires a "known" condition for every Talent involved
         if statement and not SecureCmdOptionParse(statement) then
-            local spellID = statement:match("known:(%d+)")
 
-            -- Set the icon to match the Spell used in the "known" condition
-            icon = spellID and select(3, GetSpellInfo(spellID))
-
-            return false
+            -- Check if the icon hasn't been altered by other addons
+            if r == 1 and g == 1 and b == 1 then
+                button.icon:SetVertexColor(0.5, 0.5, 0.5)
+            end
         else
-            return true
-        end
-    end
-end
-
-function Questionless:EditShadow(button, macroID)
-    local r, g, b = button.icon:GetVertexColor()
-
-    -- Check if the macro is not usable
-    if not self:IsUsable(macroID) then
-
-        -- Check if the icon hasn't been altered by other addons
-        if r == 1 and g == 1 and b == 1 then
-            button.icon:SetVertexColor(0.5, 0.5, 0.5)
-        end
-    else
-        -- Check if the icon hasn't been altered by other addons
-        if r == 0.5 and g == 0.5 and b == 0.5 then
-            button.icon:SetVertexColor(1, 1, 1)
+            -- Check if the icon hasn't been altered by other addons
+            if r == 0.5 and g == 0.5 and b == 0.5 then
+                button.icon:SetVertexColor(1, 1, 1)
+            end
         end
     end
 end
@@ -82,6 +66,30 @@ function Questionless:FixButton(button)
     end
 end
 
+function Questionless:FixMacro(macroID)
+
+    local _, icon, text = GetMacroInfo(macroID)
+
+    -- Check if the macro has text and has a question mark as icon
+    if text and icon == 134400 then
+        local statement = text:match("/use ([^\n]+)")
+
+        -- Evaluates macro options to check if the macro is not usable
+        -- IMPORTANT! Requires a "known" condition for every Talent involved
+        if statement and not SecureCmdOptionParse(statement) then
+            local spellID = statement:match("known:(%d+)")
+
+            -- Set the icon to match the Spell used in the "known" condition
+            icon = spellID and select(3, GetSpellInfo(spellID))
+        end
+
+        -- Check if in combat and if the icon should be changed
+        if not UnitAffectingCombat("player") and icon then
+            EditMacro(macroID, nil, icon)
+        end
+    end
+end
+
 function Questionless:FixButtons()
 
     -- Action Bars 1-8 (in order)
@@ -97,7 +105,6 @@ function Questionless:FixButtons()
     }
 
     for _, bar in pairs(bars) do
-
         for slot = 1, 12 do
             local button = _G[bar .. "Button" .. slot]
             self:FixButton(button)
@@ -109,27 +116,7 @@ function Questionless:FixMacros()
 
     -- Loop through account macros (1-120) and character macros (121-138)
     for macroID = 1, 138 do
-        local _, icon, text = GetMacroInfo(macroID)
-
-        if text then
-            local statement = text:match("/use ([^\n]+)")
-
-            -- Set the icon to be a question mark
-            local new_icon = 134400
-
-            -- Evaluates macro options to check if the macro is not usable
-            -- IMPORTANT! Requires a "known" condition for every Talent involved
-            if statement and not SecureCmdOptionParse(statement) then
-                local spellID = statement:match("known:(%d+)")
-
-                -- Set the icon to match the Spell used in the "known" condition
-                new_icon = spellID and select(3, GetSpellInfo(spellID))
-            end
-
-            if not UnitAffectingCombat("player") and icon ~= new_icon then
-                EditMacro(macroID, nil, new_icon)
-            end
-        end
+        self:FixMacro(macroID)
     end
 end
 
