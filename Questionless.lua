@@ -3,8 +3,9 @@ Questionless = LibStub("AceAddon-3.0"):NewAddon("Questionless", "AceBucket-3.0",
 function Questionless:EditShadow(button, macroID)
     local _, icon, text = GetMacroInfo(macroID)
 
-    if text then
-        local statement = text:match("/use ([^\n]+)")
+    -- Check if the macro has text and its icon is not a question mark
+    if text and icon ~= 134400 then
+        local statement = text:match("/use ([^\n]+)") or text:match("/cast ([^\n]+)")
 
         -- Get the current color
         local r, g, b = button.icon:GetVertexColor()
@@ -68,11 +69,14 @@ end
 
 function Questionless:FixMacro(macroID)
 
-    local _, icon, text = GetMacroInfo(macroID)
+    local _, old_icon, text = GetMacroInfo(macroID)
 
-    -- Check if the macro has text and has a question mark as icon
-    if text and icon == 134400 then
-        local statement = text:match("/use ([^\n]+)")
+    -- Check if the macro has text
+    if text then
+        local statement = text:match("/use ([^\n]+)") or text:match("/cast ([^\n]+)")
+
+        -- Set the icon to be a question mark
+        local new_icon = 134400
 
         -- Evaluates macro options to check if the macro is not usable
         -- IMPORTANT! Requires a "known" condition for every Talent involved
@@ -80,12 +84,12 @@ function Questionless:FixMacro(macroID)
             local spellID = statement:match("known:(%d+)")
 
             -- Set the icon to match the Spell used in the "known" condition
-            icon = spellID and select(3, GetSpellInfo(spellID))
+            new_icon = spellID and select(3, GetSpellInfo(spellID))
         end
 
         -- Check if in combat and if the icon should be changed
-        if not UnitAffectingCombat("player") and icon then
-            EditMacro(macroID, nil, icon)
+        if not UnitAffectingCombat("player") and old_icon ~= new_icon then
+            EditMacro(macroID, nil, new_icon)
         end
     end
 end
