@@ -1,7 +1,7 @@
-## Interface: 100205
+## Interface: 100206
 ## Title: Questionless
 ## Author: Elitesparkle
-## Version: 2.4.1
+## Version: 2.4.2
 ## IconTexture: Interface\AddOns\Questionless\Textures\Bloodstone.blp
 ## Notes: Removes question marks from Action Bars by replacing them with shadowed icons.
 ## Notes-itIT: Rimuove i punti interrogativi dalle Barre Azione rimpazzandoli con icone ombreggiate.
