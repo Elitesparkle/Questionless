@@ -87,8 +87,8 @@ function Questionless:FixMacro(macroID)
             new_icon = spellID and select(3, GetSpellInfo(spellID))
         end
 
-        -- Check if in combat and if the icon should be changed
-        if not UnitAffectingCombat("player") and old_icon ~= new_icon then
+        -- Check if not in combat, if the macro contains "known:", and if the new icon is different from the old icon
+        if not UnitAffectingCombat("player") and string.match(text, "known:") and old_icon ~= new_icon then
             EditMacro(macroID, nil, new_icon)
         end
     end
