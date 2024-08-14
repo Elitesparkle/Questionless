@@ -13,7 +13,6 @@ function Questionless:EditShadow(button, macroID)
         -- Evaluates macro options to check if the macro is not usable
         -- IMPORTANT! Requires a "known" condition for every Talent involved
         if statement and not SecureCmdOptionParse(statement) then
-
             -- Check if the icon hasn't been altered by other addons
             if r == 1 and g == 1 and b == 1 then
                 button.icon:SetVertexColor(0.5, 0.5, 0.5)
@@ -42,7 +41,6 @@ function Questionless:GetMacroID(button)
 end
 
 function Questionless:FixButton(button)
-
     local macroID = self:GetMacroID(button)
 
     if macroID then
@@ -50,7 +48,6 @@ function Questionless:FixButton(button)
 
         -- Check if this button has been already hooked here
         if not button.isEditShadowHooked then
-
             -- Do stuff when mouseover starts
             button:HookScript("OnEnter", function()
                 self:FixButton(button)
@@ -68,7 +65,6 @@ function Questionless:FixButton(button)
 end
 
 function Questionless:FixMacro(macroID)
-
     local _, old_icon, text = GetMacroInfo(macroID)
 
     -- Check if the macro has text
@@ -83,8 +79,14 @@ function Questionless:FixMacro(macroID)
         if statement and not SecureCmdOptionParse(statement) then
             local spellID = statement:match("known:(%d+)")
 
-            -- Set the icon to match the Spell used in the "known" condition
-            new_icon = spellID and select(3, GetSpellInfo(spellID))
+            if spellID then
+                -- Set the icon to match the Spell used in the "known" condition
+                local spell_info = C_Spell.GetSpellInfo(spellID)
+
+                if spell_info then
+                    new_icon = spell_info.iconID
+                end
+            end
         end
 
         -- Check if not in combat, if the macro contains "known:", and if the new icon is different from the old icon
@@ -95,7 +97,6 @@ function Questionless:FixMacro(macroID)
 end
 
 function Questionless:FixButtons()
-
     -- Action Bars 1-8 (in order)
     local bars = {
         "Action",
@@ -117,7 +118,6 @@ function Questionless:FixButtons()
 end
 
 function Questionless:FixMacros()
-
     -- Loop through account macros (1-120) and character macros (121-138)
     for macroID = 1, 138 do
         self:FixMacro(macroID)
@@ -125,9 +125,8 @@ function Questionless:FixMacros()
 end
 
 function Questionless:OnEnable()
-
     -- Do stuff when the Macros window is being closed
-    LoadAddOn("Blizzard_MacroUI")
+    C_AddOns.LoadAddOn("Blizzard_MacroUI")
     MacroFrame:HookScript("OnHide", function()
         self:FixMacros()
         self:FixButtons()
