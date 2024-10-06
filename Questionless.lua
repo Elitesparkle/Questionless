@@ -118,8 +118,8 @@ function Questionless:FixButtons()
 end
 
 function Questionless:FixMacros()
-    -- Loop through account macros (1-120) and character macros (121-138)
-    for macroID = 1, 138 do
+    -- Loop through account macros (1-120) and character macros (121-150)
+    for macroID = 1, 150 do
         self:FixMacro(macroID)
     end
 end
